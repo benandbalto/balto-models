@@ -1,0 +1,11 @@
+# Test-only dependencies of the workbook compiler. The engine itself has no
+# third-party runtime dependencies; balto_model_engine.workbook imports openpyxl
+# lazily, and balto_model_engine.parity recalculates compiled workbooks with pycel.
+et-xmlfile==2.0.0
+networkx==2.6.3
+numpy==2.5.3
+openpyxl==3.1.5
+pycel==1.0b30
+python-dateutil==2.9.0.post0
+ruamel.yaml==0.19.1
+six==1.17.0

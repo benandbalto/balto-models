@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "balto-models"
+version = "0.1.0"
+description = "Real estate pro forma models (value-add, development, Seattle MFTE/MHA development) that compile to live-formula Excel"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.12"
+dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Office/Business :: Financial",
+]
+
+[project.optional-dependencies]
+excel = ["openpyxl==3.1.5"]
+parity = ["openpyxl==3.1.5", "pycel==1.0b30"]
+
+[project.urls]
+Source = "https://github.com/benandbalto/balto-models"
+
+[tool.setuptools.packages.find]
+where = ["src"]

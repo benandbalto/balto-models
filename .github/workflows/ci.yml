@@ -1,0 +1,61 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install workbook and parity dependencies
+        run: python -m pip install --requirement requirements-test.txt
+      - name: Engine
+        run: PYTHONPATH=src python -m unittest discover -s tests/engine
+      - name: Valuation models
+        # About 30 minutes; one Python version is enough for the model suite.
+        if: matrix.python-version == '3.12'
+        run: PYTHONPATH=src python -m unittest discover -s tests/valuation
+      - name: Example workbooks match the code
+        if: matrix.python-version == '3.12'
+        run: PYTHONPATH=src python examples/build_workbooks.py --check workbooks
+      - name: Underwrite command runs every model
+        if: matrix.python-version == '3.12'
+        run: |
+          for model in value-add-acquisition multifamily-development seattle-multifamily-development; do
+            python underwrite.py new "$model" "$RUNNER_TEMP/$model/model.json"
+            python underwrite.py run "$RUNNER_TEMP/$model/model.json"
+            test -s "$RUNNER_TEMP/$model/model.xlsx"
+          done
+  native:
+    # The models run without WSL on Windows; macOS runs the service's resource limits.
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e ".[excel]"
+      - name: Underwrite command runs every model natively
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          foreach ($model in "value-add-acquisition", "multifamily-development", "seattle-multifamily-development") {
+            $file = Join-Path $env:RUNNER_TEMP $model "model.json"
+            python underwrite.py new $model $file
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            python underwrite.py run $file
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
